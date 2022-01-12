@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SMTP NetCat</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/public/static/css/bootstrap.min.css">
+    <script src="/public/static/js/jquery.min.js"></script>
+    <script src="/public/static/js/popper.min.js"></script>
+    <script src="/public/static/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<div class="jumbotron text-center">
+    <h1>SMTP NetCat</h1>
+    <p>SMTP协议测试工具</p>
+    <small><a href="https://github.com/Rvn0xsy">@Rvn0xsy</a></small>
+</div>
+
+<div class="container">
+    <div class="row">
+                <div class="col-md-6">
+                    <div class="form-inline form-group">
+                        <label for="hostname">Hostname: </label>
+                        <input type="text" class="form-control" id="hostname" placeholder="smtp.163.com">
+                        <label for="port">Port: </label>
+                        <input type="number" class="form-control" id="port" placeholder="25">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email address: </label>
+                        <input type="email" class="form-control" id="email" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pwd">Password: </label>
+                        <input type="password" class="form-control" id="pwd">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="to">To: </label>
+                        <input type="text" class="form-control" id="to" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        <label for="smtp_from">SMTP From: </label>
+                        <input type="text" class="form-control" id="smtp_from" placeholder="">
+                    </div>
+
+                    <button type="button" class="btn btn-primary" id="send">Submit</button>
+                </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="body">Body: </label>
+                    <textarea class="form-control" id="body" rows="10" placeholder=""></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+    $("#hostname").val("smtp.163.com")
+    $("#port").val("25")
+    $("#email").val("")
+    $("#pwd").val("")
+    $("#to").val("")
+    $("#smtp_from").val("")
+    $("#body").attr('placeholder',"From: xxx@gmail.com\nTo: t@gmail.com\nSubject: Test\n\nSMTP NetCat Test https://github.com/Rvn0xsy/smtp-nc")
+    $("#send").click(function (){
+        var ObjData = new Object()
+        ObjData.hostname = $("#hostname").val()
+        ObjData.port = $("#port").val()
+        ObjData.username = $("#email").val()
+        ObjData.password = $("#pwd").val()
+        ObjData.to = $("#to").val()
+        mailList = ObjData.to.split(",")
+        ObjData.to = mailList
+        ObjData.smtp_from = $("#smtp_from").val()
+        ObjData.body = $("#body").val()
+        console.log(JSON.stringify(ObjData))
+        $.post("/send",JSON.stringify(ObjData),function (data,status,xhr){
+            console.log(data)
+        }
+        ,"json")
+    })
+</script>
+</body>
+</html>
