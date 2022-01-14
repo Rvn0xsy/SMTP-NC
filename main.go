@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"embed"
 	"flag"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"html/template"
 	"io/fs"
 	"log"
+	"net"
 	"net/http"
 	"net/smtp"
 	"os"
@@ -25,17 +27,75 @@ type ProcessData struct {
 	Port string `json:"port"`
 	To []string `json:"to"`
 	Body string `json:"body"`
+	EnableSSL bool `json:"enable_ssl"`
 }
 
 func SendSMTP(Data * ProcessData){
 	auth := smtp.PlainAuth("", Data.Username, Data.Password, Data.Hostname)
 	msg := []byte(Data.Body)
-	err := smtp.SendMail(Data.Hostname +":" + Data.Port, auth, Data.SMTPFrom, Data.To, msg)
-	if err != nil {
-		log.Println(err)
-	}else {
+	servername := Data.Hostname +":" + Data.Port
+	if !Data.EnableSSL {
+		err := smtp.SendMail(servername, auth, Data.SMTPFrom, Data.To, msg)
+		if err != nil {
+			log.Println(err)
+		}else {
+			log.Println("Send Success!")
+		}
+	}else{
+		host, _, _ := net.SplitHostPort(servername)
+		// TLS config
+		tlsconfig := &tls.Config {
+			InsecureSkipVerify: true,
+			ServerName: host,
+		}
+		conn, err := tls.Dial("tcp", servername, tlsconfig)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		c, err := smtp.NewClient(conn, host)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		// Auth
+		if err = c.Auth(auth); err != nil {
+			log.Println(err)
+			return
+		}
+
+		// To && From
+		if err = c.Mail(Data.SMTPFrom); err != nil {
+			log.Println(err)
+			return
+		}
+
+		if err = c.Rcpt(Data.To[0]); err != nil {
+			log.Println(err)
+			return
+		}
+
+		// Data
+		w, err := c.Data()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		_, err = w.Write(msg)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		err = w.Close()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		c.Quit()
 		log.Println("Send Success!")
 	}
+
 }
 
 func init() {
